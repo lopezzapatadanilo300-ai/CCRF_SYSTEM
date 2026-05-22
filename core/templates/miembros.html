@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Miembros — CCRF System{% endblock %}
+{% block active_miembros %}active{% endblock %}
+
+{% block content %}
+<div class="page-header"><h2>Miembros</h2></div>
+
+{% if modo == 'form' %}
+<div class="section-card" style="max-width:520px">
+    <h3 style="margin-bottom:20px">{% if miembro %}Editar miembro{% else %}Nuevo miembro{% endif %}</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Nombre completo
+                <span style="color:red">*</span>
+            </label>
+            <input type="text" name="nombre_completo" value="{{ miembro.nombre_completo|default:'' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Teléfono
+                <span style="color:red">*</span>
+            </label>
+            <input type="text" name="telefono" value="{{ miembro.telefono|default:'' }}">
+        </div>
+        <div class="form-group">
+            <label>Dirección
+                <span style="color:red">*</span>
+            </label>
+            <input type="text" name="direccion" value="{{ miembro.direccion|default:'' }}">
+        </div>
+        <div class="form-group">
+            <label>Ministerio
+                <span style="color:red">*</span>
+            </label>
+            <input type="text" name="ministerio" value="{{ miembro.ministerio|default:'' }}" placeholder="Ej: Alabanza, Ujieres">
+        </div>
+        {% if sedes %}
+        <div class="form-group">
+            <label>Sede</label>
+            <select name="sede" required>
+                {% for s in sedes %}
+                <option value="{{ s.pk }}" {% if miembro.sede_id == s.pk %}selected{% endif %}>{{ s.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="form-group">
+            <label>Estado
+                <span style="color:red">*</span>
+            </label>
+            <select name="estado">
+                <option value="activo" {% if miembro.estado == 'activo' or not miembro %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if miembro.estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <a href="{% url 'miembros_list' %}" class="btn">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+</div>
+
+{% else %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Lista de miembros</h3>
+        <a href="{% url 'miembro_nuevo' %}" class="btn btn-primary">+ Nuevo miembro</a>
+    </div>
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        {% if sedes %}
+        <select name="sede" onchange="this.form.submit()">
+            <option value="">Todas las sedes</option>
+            {% for s in sedes %}
+            <option value="{{ s.pk }}" {% if sede_sel == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <select name="estado" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="activo" {% if estado_sel == 'activo' %}selected{% endif %}>Activos</option>
+            <option value="inactivo" {% if estado_sel == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+    </form>
+    <table class="data-table">
+        <thead>
+            <tr><th>Nombre</th><th>Ministerio</th><th>Teléfono</th><th>Sede</th><th>Estado</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+            {% for m in miembros %}
+            <tr>
+                <td><strong>{{ m.nombre_completo }}</strong></td>
+                <td>{{ m.ministerio|default:"—" }}</td>
+                <td>{{ m.telefono|default:"—" }}</td>
+                <td>{{ m.sede.nombre }}</td>
+                <td>{% if m.estado == 'activo' %}<span class="badge badge-green">Activo</span>{% else %}<span class="badge badge-gray">Inactivo</span>{% endif %}</td>
+                <td style="display:flex;gap:6px">
+                    <a href="{% url 'miembro_editar' m.pk %}" class="btn">Editar</a>
+                    <a href="{% url 'miembro_toggle' m.pk %}" class="btn">{% if m.estado == 'activo' %}Desactivar{% else %}Activar{% endif %}</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not miembros %}<p class="empty-state">No hay miembros registrados.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

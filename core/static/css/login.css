@@ -1,0 +1,115 @@
+.login-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url('/static/img/fondo.jpeg') center center / cover no-repeat;
+    background-attachment: fixed;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+.login-card {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-logo {
+    margin-bottom: 12px;
+}
+
+.login-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.login-header p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 6px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border .2s;
+}
+
+.form-group input:focus {
+    border-color: #534AB7;
+    box-shadow: 0 0 0 3px rgba(83,74,183,0.1);
+}
+
+.password-wrap {
+    position: relative;
+}
+
+.password-wrap input {
+    padding-right: 42px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 11px;
+    background: #534AB7;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+    margin-top: 4px;
+}
+
+.btn-login:hover {
+    background: #4339a0;
+}
+
+.login-note {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 16px;
+}

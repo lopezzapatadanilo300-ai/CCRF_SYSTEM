@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load filtro %}
+{% load static %}
+
+{% block title %}Finanzas — CCRF System{% endblock %}
+{% block active_finanzas %}active{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/finanzas.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2>Finanzas</h2>
+</div>
+
+{% if modo == 'form' %}
+
+<div class="section-card" style="max-width:520px">
+
+    <h3 style="margin-bottom:20px">
+        Registrar movimiento
+    </h3>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label>Tipo de movimiento <span style="color:red">*</span></label>
+
+            <select name="tipo" id="tipo-select" required onchange="toggleMiembro()">
+                <option value="">Seleccionar...</option>
+                <option value="diezmo">Diezmo</option>
+                <option value="ofrenda">Ofrenda</option>
+                <option value="primicia">Primicia</option>
+                <option value="accion_gracias">Acción de Gracias</option>
+                <option value="gasto">Gasto</option>
+            </select>
+
+        </div>
+
+        <div class="form-group" id="miembro-group" style="display:none">
+
+            <label>Miembro <span style="color:red">*</span></label>
+
+            <select name="miembro" id="miembro-select">
+                <option value="">Seleccionar miembro...</option>
+                {% for m in miembros %}
+                <option value="{{ m.pk }}">{{ m.nombre_completo }}</option>
+                {% endfor %}
+            </select>
+
+            <small style="color:#888">Requerido solo para diezmos</small>
+
+        </div>
+
+        {% if sedes %}
+        <div class="form-group">
+            <label>Sede <span style="color:red">*</span></label>
+            <select name="sede" required>
+                {% for s in sedes %}
+                <option value="{{ s.pk }}">{{ s.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>Monto <span style="color:red">*</span></label>
+            <input type="number" name="monto" step="0.01" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label>Fecha <span style="color:red">*</span></label>
+            <input type="date" name="fecha" required>
+        </div>
+
+        <div class="form-group">
+            <label>Descripción <span style="color:red">*</span></label>
+            <textarea name="descripcion" id="descripcion-field" rows="3" placeholder="" required></textarea>
+            <small id="desc-hint" style="color:#888;display:none">Requerido para gastos</small>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'finanzas_list' %}" class="btn">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+
+    </form>
+
+</div>
+
+{% else %}
+
+<div class="section-card">
+
+    <div class="section-header">
+        <h3>Movimientos financieros</h3>
+        <a href="{% url 'finanza_nueva' %}" class="btn btn-primary">+ Registrar</a>
+    </div>
+
+    <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+
+        {% if sedes %}
+        <select name="sede" onchange="this.form.submit()">
+            <option value="">Todas las sedes</option>
+            {% for s in sedes %}
+            <option value="{{ s.pk }}" {% if sede_sel == s.pk|stringformat:"s" %}selected{% endif %}>
+                {{ s.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+        {% endif %}
+
+        <select name="tipo" onchange="this.form.submit()">
+            <option value="">Todos los tipos</option>
+            <option value="diezmo" {% if tipo_sel == 'diezmo' %}selected{% endif %}>Diezmo</option>
+            <option value="ofrenda" {% if tipo_sel == 'ofrenda' %}selected{% endif %}>Ofrenda</option>
+            <option value="primicia" {% if tipo_sel == 'primicia' %}selected{% endif %}>Primicia</option>
+            <option value="accion_gracias" {% if tipo_sel == 'accion_gracias' %}selected{% endif %}>Acción de Gracias</option>
+            <option value="gasto" {% if tipo_sel == 'gasto' %}selected{% endif %}>Gasto</option>
+        </select>
+
+    </form>
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+                <th>Miembro</th>
+                <th>Descripción</th>
+                <th>Sede</th>
+                <th>Acciones</th>
+                
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for m in movimientos %}
+            <tr>
+                <td>{{ m.fecha|date:"d M Y" }}</td>
+                <td>
+                    <span class="badge {% if m.tipo == 'gasto' %}badge-red{% else %}badge-blue{% endif %}">
+                        {{ m.get_tipo_display }}
+                    </span>
+                </td>
+                <td><strong>${{ m.monto|miles }}</strong></td>
+                <td>{{ m.miembro.nombre_completo|default:"—" }}</td>
+                <td>{{ m.descripcion|default:"—" }}</td>
+                <td>{{ m.sede.nombre }}</td>
+                <td>
+                    <button class="btn" type="button" onclick="abrirEditar({{ m.pk }})">Editar</button>
+                    <a href="{% url 'finanza_eliminar' m.pk %}" class="btn btn-danger"
+                        onclick="return confirm('¿Eliminar movimiento?')">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    <div style="text-align:right;margin-top:12px;font-weight:600;">
+        Total: ${{ total|miles }}
+    </div>
+
+    {% if not movimientos %}
+    <p class="empty-state">No hay movimientos registrados.</p>
+    {% endif %}
+
+</div>
+
+<div id="editarOverlay" style="
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,0.35);
+    z-index:999;
+    justify-content:center;
+    align-items:flex-start;
+    padding-top:40px;">
+
+    {% for m in movimientos %}
+    <div id="editarCard{{ m.pk }}" class="editar-card" style="
+        display:none;
+        background:white;
+        width:780px;
+        border-radius:24px;
+        padding:32px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+
+        <h2 style="margin-bottom:30px">Editar movimiento</h2>
+
+        <form method="POST" action="{% url 'finanza_editar' m.pk %}">
+
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Tipo</label>
+                <select name="tipo" required>
+                    <option value="diezmo" {% if m.tipo == 'diezmo' %}selected{% endif %}>Diezmo</option>
+                    <option value="ofrenda" {% if m.tipo == 'ofrenda' %}selected{% endif %}>Ofrenda</option>
+                    <option value="primicia" {% if m.tipo == 'primicia' %}selected{% endif %}>Primicia</option>
+                    <option value="accion_gracias" {% if m.tipo == 'accion_gracias' %}selected{% endif %}>Acción de Gracias</option>
+                    <option value="gasto" {% if m.tipo == 'gasto' %}selected{% endif %}>Gasto</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Monto</label>
+                <input type="number" name="monto" value="{{ m.monto }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" value="{{ m.fecha|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea name="descripcion" rows="4">{{ m.descripcion }}</textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:14px;margin-top:30px;">
+                <button type="button" class="btn" onclick="cerrarEditar()">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+
+        </form>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+<script>
+function abrirEditar(id) {
+    document.getElementById('editarOverlay').style.display = 'flex';
+    document.querySelectorAll('.editar-card').forEach(card => card.style.display = 'none');
+    document.getElementById('editarCard' + id).style.display = 'block';
+}
+
+function cerrarEditar() {
+    document.getElementById('editarOverlay').style.display = 'none';
+}
+</script>
+
+{% endblock %}

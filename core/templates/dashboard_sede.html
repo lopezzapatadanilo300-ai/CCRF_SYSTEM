@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load filtro %}
+{% load static %}
+{% block title %}Dashboard — CCRF System{% endblock %}
+{% block active_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>Bienvenido, {{ request.user.get_full_name|default:request.user.username }} — {{ request.user.sede }}</p>
+</div>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-icon blue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
+        <div class="metric-info">
+            <span class="metric-value">{{ total_miembros }}</span>
+            <span class="metric-label">Miembros activos</span>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="metric-info">
+            <span class="metric-value">${{ total_ingresos|miles }}</span>
+            <span class="metric-label">Ingresos este mes</span>
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-icon red">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="metric-info">
+            <span class="metric-value">${{ total_gastos|miles }}</span>
+            <span class="metric-label">Gastos este mes</span>
+        </div>
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="section-header">
+        <h3>Últimos movimientos</h3>
+    </div>
+    {% if ultimos_movimientos %}
+    <table class="data-table">
+        <thead>
+           <tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Miembro</th><th>Descripción</th></tr>
+        </thead>
+        <tbody>
+            {% for m in ultimos_movimientos %}
+            <tr>
+                <td>{{ m.fecha|date:"d M Y" }}</td>
+                <td>
+                 <span class="badge {% if m.tipo == 'gasto' %}badge-red{% else %}badge-blue{% endif %}">
+                  {{ m.get_tipo_display }} </span>
+                </td>
+                <td><span class="metric-value">${{ m.monto|miles }}</span></td>
+                <td>{{ m.miembro.nombre_completo|default:"—" }}</td>
+                <td>{{ m.descripcion|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No hay movimientos registrados este mes.</p>
+    {% endif %}
+</div>
+{% endblock %}

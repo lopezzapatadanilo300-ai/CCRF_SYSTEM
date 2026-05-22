@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load filtro %}
+{% block title %}Reportes — CCRF System{% endblock %}
+{% block active_reportes %}active{% endblock %}
+
+{% block content %}
+<div class="page-header"><h2>Reportes</h2></div>
+
+{% if modo == 'ranking' %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Ranking de diezmadores {{ anio }}</h3>
+        <a href="{% url 'reportes' %}" class="btn">← Volver</a>
+    </div>
+    <form method="GET" style="display:flex;gap:8px;margin-bottom:16px">
+        {% if sedes %}
+        <select name="sede" onchange="this.form.submit()">
+            <option value="">Todas las sedes</option>
+            {% for s in sedes %}<option value="{{ s.pk }}" {% if sede_sel == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        <input type="number" name="anio" value="{{ anio }}" style="width:90px">
+        <button type="submit" class="btn">Filtrar</button>
+    </form>
+    <table class="data-table">
+        <thead><tr><th>#</th><th>Miembro</th><th>Sede</th><th>Total diezmado</th></tr></thead>
+        <tbody>
+            {% for r in ranking %}
+            <tr>
+                <td><strong>{{ forloop.counter }}</strong></td>
+                <td>{{ r.miembro__nombre_completo }}</td>
+                <td>{{ r.miembro__sede__nombre }}</td>
+                <td><strong>${{ r.total|miles }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not ranking %}<p class="empty-state">No hay diezmos para {{ anio }}.</p>{% endif %}
+</div>
+
+{% else %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Resumen financiero — {{ anio }}</h3>
+        <div style="display:flex;gap:8px">
+            <a href="{% url 'exportar_pdf' %}?anio={{ anio }}" class="btn">Exportar PDF</a>
+            <a href="{% url 'exportar_excel' %}?anio={{ anio }}" class="btn btn-primary">Exportar Excel</a>
+        </div>
+    </div>
+    <form method="GET" style="margin-bottom:16px;display:flex;gap:10px">
+        {% if sedes %}
+        <select name="sede" onchange="this.form.submit()">
+            <option value="">Todas las sedes</option>
+            {% for s in sedes %}<option value="{{ s.pk }}" {% if sede_sel == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        <input type="number" name="anio" value="{{ anio }}" style="width:90px">
+        <button type="submit" class="btn">Filtrar</button>
+        <a href="{% url 'ranking' %}?anio={{ anio }}" class="btn btn-primary">Ver ranking diezmadores</a>
+    </form>
+    <table class="data-table">
+        <thead><tr><th>Tipo</th><th>Total</th></tr></thead>
+        <tbody>
+            {% for item in resumen %}
+            <tr>
+                <td><span class="badge badge-blue">{{ item.tipo|capfirst }}</span></td>
+                <td><strong>${{ item.total|miles }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not resumen %}<p class="empty-state">No hay datos para {{ anio }}.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

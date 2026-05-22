@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load filtro %}
+{% block title %}Sedes y usuarios — CCRF System{% endblock %}
+{% block active_sedes %}active{% endblock %}
+
+{% block content %}
+<div class="page-header"><h2>Sedes y usuarios</h2></div>
+
+{% if modo == 'sede_form' %}
+<div class="section-card" style="max-width:520px">
+    <h3 style="margin-bottom:20px">{% if sede %}Editar sede{% else %}Nueva sede{% endif %}</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Nombre de la sede</label>
+            <input type="text" name="nombre" value="{{ sede.nombre|default:'' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Municipio</label>
+            <input type="text" name="municipio" value="{{ sede.municipio|default:'' }}" required>
+        </div>
+        <div class="form-group">
+            <label>Dirección</label>
+            <input type="text" name="direccion" value="{{ sede.direccion|default:'' }}">
+        </div>
+        <div class="form-group checkbox-group">
+            <label><input type="checkbox" name="activa" {% if sede.activa or not sede %}checked{% endif %}> Sede activa</label>
+        </div>
+        <div class="form-actions">
+            <a href="{% url 'sedes_list' %}" class="btn">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+    </form>
+</div>
+
+{% elif modo == 'usuario_form' %}
+<div class="section-card" style="max-width:520px">
+    <h3 style="margin-bottom:20px">Nuevo usuario</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" name="first_name" required>
+        </div>
+        <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" name="last_name" required>
+        </div>
+        <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" name="username" required>
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label>Rol</label>
+            <select name="rol">
+                <option value="pastor_sede">Pastor Sede</option>
+                <option value="secretario">Secretario</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Sede</label>
+            <select name="sede" required>
+                {% for s in sedes %}<option value="{{ s.pk }}">{{ s.nombre }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-actions">
+            <a href="{% url 'sedes_list' %}" class="btn">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Crear usuario</button>
+        </div>
+    </form>
+</div>
+
+{% elif modo == 'usuarios' %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Usuarios del sistema</h3>
+        <a href="{% url 'usuario_nuevo' %}" class="btn btn-primary">+ Nuevo usuario</a>
+    </div>
+    <table class="data-table">
+        <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Sede</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td><strong>{{ u.username }}</strong></td>
+                <td>{{ u.get_full_name|default:u.username }}</td>
+                <td><span class="badge badge-blue">{{ u.get_rol_display }}</span></td>
+                <td>{{ u.sede|default:"—" }}</td>
+                <td>{% if u.is_active %}<span class="badge badge-green">Activo</span>{% else %}<span class="badge badge-gray">Inactivo</span>{% endif %}</td>
+                <td><a href="{% url 'usuario_toggle' u.pk %}" class="btn {% if u.is_active %}btn-danger{% endif %}">{% if u.is_active %}Desactivar{% else %}Activar{% endif %}</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="section-card">
+    <div class="section-header">
+        <h3>Sedes registradas</h3>
+        <div style="display:flex;gap:8px">
+            <a href="{% url 'usuarios_list' %}" class="btn">Ver usuarios</a>
+            <a href="{% url 'sede_nueva' %}" class="btn btn-primary"> Nueva sede</a>
+            <a href="{% url 'crear_usuario' %}" class="btn btn-primary">Nuevo usuario</a>
+        </div>
+    </div>
+    <table class="data-table">
+        <thead><tr><th>Nombre</th><th>Municipio</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+            {% for s in sedes %}
+            <tr>
+                <td><strong>{{ s.nombre }}</strong></td>
+                <td>{{ s.municipio }}</td>
+                <td>{{ s.direccion|default:"—" }}</td>
+                <td>{% if s.activa %}<span class="badge badge-green">Activa</span>{% else %}<span class="badge badge-gray">Inactiva</span>{% endif %}</td>
+                <td><a href="{% url 'sede_editar' s.pk %}" class="btn">Editar</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load filtro %}
+
+{% block title %}Inventario — CCRF System{% endblock %}
+{% block active_inventario %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>Inventario</h1>
+</div>
+
+{% if modo == 'form' %}
+<div class="section-card" style="max-width:520px">
+
+    <h2 style="margin-bottom:24px">Nuevo reporte</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Mes</label>
+            <select name="mes" required>
+                {% for m in meses %}
+                <option value="{{ m }}">{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Año</label>
+            <input type="number" name="anio" value="{{ year }}" required>
+        </div>
+
+        {% if sedes %}
+        <div class="form-group">
+            <label>Sede</label>
+            <select name="sede" required>
+                {% for s in sedes %}
+                <option value="{{ s.pk }}">{{ s.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <a href="{% url 'inventario_list' %}" class="btn">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Crear reporte</button>
+        </div>
+
+    </form>
+
+</div>
+
+{% elif modo == 'detalle' %}
+
+<div class="section-card">
+
+    <div class="section-header">
+        <h2>{{ reporte.sede.nombre }} — {{ reporte.mes }}/{{ reporte.anio }}</h2>
+        {% if reporte.estado == 'borrador' %}
+            <span class="badge badge-amber">{{ reporte.get_estado_display }}</span>
+        {% elif reporte.estado == 'enviado' %}
+            <span class="badge badge-blue">{{ reporte.get_estado_display }}</span>
+        {% else %}
+            <span class="badge badge-green">{{ reporte.get_estado_display }}</span>
+        {% endif %}
+    </div>
+
+    <div style="display:flex; gap:12px; margin-bottom:24px;">
+
+        {% if reporte.estado == 'borrador' %}
+        <a href="{% url 'inventario_enviar' reporte.pk %}" class="btn btn-primary">
+            Enviar reporte
+        </a>
+        {% endif %}
+
+        {% if request.user.rol == 'pastor_central' and reporte.estado == 'enviado' %}
+        <a href="{% url 'inventario_revisar' reporte.pk %}" class="btn btn-primary">
+            ✓ Marcar como revisado
+        </a>
+        {% endif %}
+
+        {% if request.user.rol == 'pastor_central' %}
+        <a href="{% url 'inventario_pdf' reporte.pk %}" class="btn">
+            Exportar PDF
+        </a>
+        <a href="{% url 'inventario_excel' reporte.pk %}" class="btn">
+            Exportar Excel
+        </a>
+        {% endif %}
+
+        <a href="{% url 'inventario_list' %}" class="btn">← Volver</a>
+
+    </div>
+
+    <table class="data-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th style="text-align:left; padding:16px;">TIPO</th>
+                <th style="text-align:left; padding:16px;">DESCRIPCIÓN</th>
+                <th style="text-align:right; padding:16px;">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resumen in resumenes %}
+            <tr style="border-top:1px solid #eee;">
+                <td style="padding:18px 16px;">
+                    <strong>
+                        {% if resumen.tipo == 'diezmo' %}Diezmos
+                        {% elif resumen.tipo == 'ofrenda' %}Ofrendas
+                        {% elif resumen.tipo == 'primicia' %}Primicias
+                        {% elif resumen.tipo == 'accion_gracias' %}Acción de gracias
+                        {% elif resumen.tipo == 'gasto' %}Gastos
+                        {% else %}{{ resumen.tipo }}
+                        {% endif %}
+                    </strong>
+                </td>
+                <td style="padding:18px 16px; color:#666;">
+                    Movimientos financieros registrados del mes
+                </td>
+                <td style="padding:18px 16px; text-align:right;">
+                    <span class="badge {% if resumen.tipo == 'gasto' %}badge-red{% else %}badge-green{% endif %}">
+                        ${{ resumen.total|miles }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top:32px; border-top:1px solid #eee; padding-top:20px; display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px;">
+            <span style="color:#666; font-size:15px;">Total ingresos</span>
+            <span style="font-size:20px; color:#166534; font-weight:600;">+ ${{ total_ingresos|miles }}</span>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px;">
+            <span style="color:#666; font-size:15px;">Total gastos</span>
+            <span style="font-size:20px; color:#991b1b; font-weight:600;">- ${{ total_gastos|miles }}</span>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; border-top:1px solid #eee; padding-top:10px;">
+            <span style="color:#666; font-size:18px; font-weight:700;">TOTAL GENERAL</span>
+            <span style="font-size:32px; font-weight:700; color:{% if total_general >= 0 %}#166534{% else %}#991b1b{% endif %}">
+                ${{ total_general|miles }}
+            </span>
+        </div>
+
+    </div>
+
+    {% if not resumenes %}
+    <p class="empty-state">No hay movimientos registrados para este mes.</p>
+    {% endif %}
+
+</div>
+
+{% else %}
+
+<div class="section-card">
+
+    <div class="section-header">
+        <h2>Reportes mensuales</h2>
+        <a href="{% url 'inventario_nuevo' %}" class="btn btn-primary">+ Nuevo reporte</a>
+    </div>
+
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-top:20px;">
+        <thead>
+            <tr>
+                <th style="padding:16px; text-align:left;">SEDE</th>
+                <th style="padding:16px; text-align:left;">MES</th>
+                <th style="padding:16px; text-align:left;">AÑO</th>
+                <th style="padding:16px; text-align:left;">ESTADO</th>
+                <th style="padding:16px; text-align:left;">ACCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reportes %}
+            <tr style="border-top:1px solid #eee;">
+                <td style="padding:18px 16px;">{{ r.sede.nombre }}</td>
+                <td style="padding:18px 16px;">{{ r.mes }}</td>
+                <td style="padding:18px 16px;">{{ r.anio }}</td>
+                <td style="padding:18px 16px;">
+                    {% if r.estado == 'borrador' %}
+                        <span class="badge badge-amber">Borrador</span>
+                    {% elif r.estado == 'enviado' %}
+                        <span class="badge badge-blue">Enviado</span>
+                    {% else %}
+                        <span class="badge badge-green">Revisado</span>
+                    {% endif %}
+                </td>
+                <td style="padding:18px 16px;">
+                    <a href="{% url 'inventario_detalle' r.pk %}" class="btn">Ver reporte</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if not reportes %}
+    <p class="empty-state">No hay reportes creados.</p>
+    {% endif %}
+
+</div>
+
+{% endif %}
+
+{% endblock %}
