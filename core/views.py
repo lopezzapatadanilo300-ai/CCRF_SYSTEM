@@ -315,7 +315,6 @@ def inventario_list(request):
         'reportes': reportes
     })
 
-
 def inventario_form(request):
 
     user = request.user
@@ -364,6 +363,10 @@ def inventario_form(request):
             )
 
             return redirect('inventario_list')
+
+    # ← LÍNEAS QUE FALTABAN
+    sedes = Sede.objects.filter(activa=True)
+    return render(request, 'inventario.html', {'sedes': sedes, 'modo': 'form'})
 
 def inventario_detalle(request, pk):
 
