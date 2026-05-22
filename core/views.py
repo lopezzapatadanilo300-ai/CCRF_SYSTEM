@@ -11,6 +11,7 @@ from .models import Sede, Usuario, Miembro, MovimientoFinanciero, ReporteInventa
 import datetime
 
 
+
 # ─── AUTH ────────────────────────────────────────────────────────────────────
 
 def login_view(request):
@@ -366,7 +367,7 @@ def inventario_form(request):
 
     # ← LÍNEAS QUE FALTABAN
     
-    import datetime
+   
     sedes = Sede.objects.filter(activa=True)
     meses = range(1, 13)
     year = datetime.date.today().year
