@@ -365,8 +365,17 @@ def inventario_form(request):
             return redirect('inventario_list')
 
     # ← LÍNEAS QUE FALTABAN
+    
+    import datetime
     sedes = Sede.objects.filter(activa=True)
-    return render(request, 'inventario.html', {'sedes': sedes, 'modo': 'form'})
+    meses = range(1, 13)
+    year = datetime.date.today().year
+    return render(request, 'inventario.html', {
+        'sedes': sedes,
+        'meses': meses,
+        'year': year,
+        'modo': 'form'
+    })
 
 def inventario_detalle(request, pk):
 
